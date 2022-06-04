@@ -78,6 +78,7 @@ class Game(object):
         pygame.draw.rect(self.surface, (114, 114, 114), self.settings_rect, 0)
         self.surface.blit(settings_text, (BLOCK_SIZE, HEIGHT+BLOCK_SIZE))
 
+    
     def choise_window(self):
         self.root = tk.Tk()
         self.root.title('Settings')
@@ -87,16 +88,20 @@ class Game(object):
         self.label_born = tk.Label(self.root, text='Born')
         self.label_survive.grid(column = 0, columnspan= 9, row = 0)
         self.label_born.grid(column = 0, columnspan= 9, row = 3)
-        self.checkboxes_survive = []
+        self.checkboxes_survive=[]
         self.checkboxes_born = []
-        self.new_survive = self.survive.copy()
-        self.new_born = self.born.copy()
+        self.new_survive = []
+        self.new_born = []
         for i in range(9):
-            self.checkboxes_survive.append(tk.Checkbutton(self.root, text=str(i), command = lambda: self.new_values(0, i)))
+            self.new_survive.append(self.survive[i])
+            self.new_born.append(self.born[i])
+            self.new_survive[i] = tk.BooleanVar()
+            self.new_born[i] = tk.BooleanVar()
+            self.checkboxes_survive.append(tk.Checkbutton(self.root, text=str(i), variable = self.new_survive[i]))
             if self.survive[i]:
                 self.checkboxes_survive[i].select()
             self.checkboxes_survive[i].grid(column = i, row = 1)
-            self.checkboxes_born.append(tk.Checkbutton(self.root, text=str(i), command = lambda: self.new_values(1, i)))
+            self.checkboxes_born.append(tk.Checkbutton(self.root, text=str(i), variable = self.new_born[i]))
             if self.born[i]:
                 self.checkboxes_born[i].select()
             self.checkboxes_born[i].grid(column = i, row = 4)
@@ -104,22 +109,13 @@ class Game(object):
         self.save_button.grid(column = 0, columnspan= 9, row = 5)
         self.root.mainloop()
 
-    def new_values(self, type, number):
-        print(number)
-        if type == 0:
-            print(type)
-            self.new_survive[number] = not self.new_survive[number]
-        if type == 1:
-            self.new_born[number] = not self.new_born[number]
-
 
     def save_values(self):
-        self.survive = self.new_survive
-        self.born = self.new_born
+        for i in range(9):
+            self.survive[i] = self.new_survive[i].get()
+            self.born[i] = self.new_born[i].get()
         self.root.destroy()
         print(self.survive)
-
-
 
         # rect = pygame.draw.rect(self.surface, (114, 114, 114), (HEIGHT+1)*BLOCK_SIZE, BLOCK_SIZE, )
         # text_rect = settings.get_rect(center=rect.center)
@@ -157,43 +153,6 @@ class Game(object):
             time.sleep(self.time)
             pygame.display.update()
             self.next_generation()
-
-"""
-class Settings_window(object):
-
-        def __init__(born, survive):
-            root = tk.Tk()
-            root.title('Settings')
-            root.geometry("200x100")
-            label_born = tk.Label(root, bg='white', width=20, text='Survive')
-            label_born.grid(column = 0, columnspan= 8)
-            checkboxes_survive = []
-            labels_survive = []
-            for i in range(8):
-                    labels_survive.append(tk.Label(root,text=str(i)))
-                    checkboxes_survive.append(tk.Checkbutton)
-            c1 = tk.Checkbutton(root, text='Python', onvalue=1, offvalue=0)
-            c1.pack()
-
-        root.mainloop()
-
-    def run(self):
-        root = tk.Tk()
-            root.title('Settings')
-            root.geometry("200x100")
-            label_born = tk.Label(root, bg='white', width=20, text='Survive')
-            label_born.grid(column = 0, columnspan= 8)
-            checkboxes_survive = []
-            labels_survive = []
-            for i in range(8):
-                    labels_survive.append(tk.Label(root,text=str(i)))
-                    checkboxes_survive.append(tk.Checkbutton)
-            c1 = tk.Checkbutton(root, text='Python', onvalue=1, offvalue=0)
-        
-
-        root.mainloop()
-"""
-                  
 
 
 if __name__ == "__main__":

@@ -37,7 +37,9 @@ class Game(object):
         self.counter = 0
         self.settings_rect = None
         self.mouse_pos = (None, None)
+        self.window = Window()
 
+    # this function changes dead cells to living and vice versa
     def change_on_click(self):
         x, y = (self.mouse_pos[0] // BLOCK_SIZE, self.mouse_pos[1] // BLOCK_SIZE)
         print(x,y)
@@ -48,22 +50,23 @@ class Game(object):
         else:
             self.grid[x][y] = None
 
+    #creating next generation of GoL
     def next_generation(self):
         if self.pause:
             return None
-        next_grid = [[None for y in range(ROWS)] for x in range(COLUMNS)]
+        next_grid = [[None for y in range(ROWS)] for x in range(COLUMNS)] #empty grid to store values
         for x in range(COLUMNS):
             for y in range(ROWS):
                 self.counter = 0
                 for i, j in around_element:
-                    if self.grid[(x+i) % COLUMNS][(y+j) % ROWS] != None:
+                    if self.grid[(x+i) % COLUMNS][(y+j) % ROWS] != None: #modulo used -> table is looped
                         self.counter += 1
-                if self.grid[x][y] == None:
+                if self.grid[x][y] == None:     #dead cells become alive
                     if self.born.get(self.counter):
                         next_grid[x][y] = 0
                 else:
                     if self.survive.get(self.counter):
-                        if self.grid[x][y] < len(SHADES) -1:
+                        if self.grid[x][y] < len(SHADES) -1:     #living cells survive + change of color
                             next_grid[x][y] = self.grid[x][y] + 1
                         else:
                             next_grid[x][y] = self.grid[x][y]
@@ -71,6 +74,7 @@ class Game(object):
                         next_grid[x][y] = None
         self.grid = next_grid.copy()
 
+    # creating settings button
     def settings_button(self):
         font = pygame.font.SysFont("arial", BLOCK_SIZE*2)
         settings_text = font.render("Settings", True, (0, 0, 255))        
@@ -78,51 +82,6 @@ class Game(object):
         pygame.draw.rect(self.surface, (114, 114, 114), self.settings_rect, 0)
         self.surface.blit(settings_text, (BLOCK_SIZE, HEIGHT+BLOCK_SIZE))
 
-    
-    def choise_window(self):
-        self.root = tk.Tk()
-        self.root.title('Settings')
-        self.root.geometry("")
-        self.root.resizable(True, True)
-        self.label_survive = tk.Label(self.root, text='Survive')
-        self.label_born = tk.Label(self.root, text='Born')
-        self.label_survive.grid(column = 0, columnspan= 9, row = 0)
-        self.label_born.grid(column = 0, columnspan= 9, row = 3)
-        self.checkboxes_survive=[]
-        self.checkboxes_born = []
-        self.new_survive = []
-        self.new_born = []
-        for i in range(9):
-            self.new_survive.append(self.survive[i])
-            self.new_born.append(self.born[i])
-            self.new_survive[i] = tk.BooleanVar()
-            self.new_born[i] = tk.BooleanVar()
-            self.checkboxes_survive.append(tk.Checkbutton(self.root, text=str(i), variable = self.new_survive[i]))
-            if self.survive[i]:
-                self.checkboxes_survive[i].select()
-            self.checkboxes_survive[i].grid(column = i, row = 1)
-            self.checkboxes_born.append(tk.Checkbutton(self.root, text=str(i), variable = self.new_born[i]))
-            if self.born[i]:
-                self.checkboxes_born[i].select()
-            self.checkboxes_born[i].grid(column = i, row = 4)
-        self.save_button = tk.Button(self.root, text = "Save", command = self.save_values)
-        self.save_button.grid(column = 0, columnspan= 9, row = 5)
-        self.root.mainloop()
-
-
-    def save_values(self):
-        for i in range(9):
-            self.survive[i] = self.new_survive[i].get()
-            self.born[i] = self.new_born[i].get()
-        self.root.destroy()
-        print(self.survive)
-
-        # rect = pygame.draw.rect(self.surface, (114, 114, 114), (HEIGHT+1)*BLOCK_SIZE, BLOCK_SIZE, )
-        # text_rect = settings.get_rect(center=rect.center)
-        # self.game_screen.blit(settings, text_rect)
-        #self.surface.blit(settings (BLOCK_SIZE, index*BLOCK_SIZE))
-        # rect = pygame.Rect(x*BLOCK_SIZE, y*BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE)
-        # pygame.draw.rect(self.surface, SHADES[self.grid[x][y]], rect, 0)
 
     def print_grid(self):
         for x in range(ROWS):
@@ -147,13 +106,65 @@ class Game(object):
                         self.mouse_pos = pygame.mouse.get_pos()
                         self.change_on_click()
                         if self.settings_rect.collidepoint(self.mouse_pos):
-                            self.choise_window()
+                            self.window.show_window()                       #creating window as a new object
+                            self.survive = self.window.old_survive.copy()  #updating conditions
+                            self.born = self.window.old_born.copy()       # updateing conditoins
             self.print_grid()
             self.settings_button()
             time.sleep(self.time)
             pygame.display.update()
             self.next_generation()
 
+
+class Window(object):
+    def __init__(self) -> None:
+        self.root = None
+        self.new_survive = []
+        self.new_born = []
+        self.checkboxes_survive=[]
+        self.checkboxes_born = []
+        self.old_survive = {0: False, 1: False, 2:True, 3:True, 4:False, 5:False, 6:False, 7:False, 8:False}
+        self.old_born = {0: False, 1: False, 2:False, 3:True, 4:False, 5:False, 6:False, 7:False, 8:False}
+
+    def show_window(self):
+        self.root = tk.Tk()
+        self.new_survive = [tk.BooleanVar() for x in range (9)]
+        self.new_born = [tk.BooleanVar() for x in range (9)]
+        self.root.title('Settings')
+        self.root.geometry("")
+        self.root.resizable(True, True)
+
+        self.checkboxes_survive=[]
+        self.checkboxes_born = []
+
+        self.label_survive = tk.Label(self.root, text='Survive')
+        self.label_survive.grid(column = 0, columnspan= 9, row = 0)
+        
+        self.label_born = tk.Label(self.root, text='Born')
+        self.label_born.grid(column = 0, columnspan= 9, row = 3)            
+        
+        for i in range(9):              #creating all checkboxes 
+            self.checkboxes_survive.append(tk.Checkbutton(self.root, text=str(i), variable = self.new_survive[i]))
+            self.checkboxes_born.append(tk.Checkbutton(self.root, text=str(i), variable = self.new_born[i]))
+            if self.old_survive[i]:
+                self.checkboxes_survive[i].select()
+            self.checkboxes_survive[i].grid(column = i, row = 1)
+            if self.old_born[i]:
+                self.checkboxes_born[i].select()
+            self.checkboxes_born[i].grid(column = i, row = 4)
+
+        self.save_button = tk.Button(self.root, text = "Save", command = self.save_values)
+        self.save_button.grid(column = 0, columnspan= 9, row = 5)
+        self.root.mainloop()
+
+        
+    def save_values(self):
+        for i in range(9):
+            self.old_survive[i] = self.new_survive[i].get()
+            self.old_born[i] = self.new_born[i].get()
+        self.root.destroy()
+        
+        
 
 if __name__ == "__main__":
     game = Game()

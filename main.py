@@ -11,14 +11,14 @@ pygame.font.init()
 
 
 BLOCK_SIZE = 10
-ROWS = 50
-COLUMNS = 50
+ROWS = 55
+COLUMNS = 55
 WIDTH = BLOCK_SIZE*COLUMNS
 HEIGHT = BLOCK_SIZE*ROWS
 LOWER_WIDTH = BLOCK_SIZE*5
 BLACK = (0, 0, 0)
 WHITE = (200, 200, 200)
-SHADES = (WHITE, (172,203,255), (146,187,255), (120,170,255), (100,158,255), (65,136,255))
+SHADES =[WHITE] + [(i, i, 255) for i in range(240, 0, -15)]#(172,203,255), (146,187,255), (120,170,255), (100,158,255), (65,136,255))
 DEFAULT_TIME = 0.2
 around_element = [(i,j) for i in (-1, 1, 0) for j in (-1, 1, 0)][:-1]
 
@@ -28,6 +28,9 @@ class Game(object):
     def __init__(self) -> None:
         pygame.init()
         self.surface = pygame.display.set_mode((WIDTH, HEIGHT+LOWER_WIDTH))
+        pygame.display.set_caption('Game of Life')
+        my_icon = pygame.image.load("GoL\GOL_icon.png")
+        pygame.display.set_icon(my_icon)
         self.surface.fill(BLACK)
         self.grid = [[None for y in range(ROWS)] for x in range(COLUMNS)]
         self.survive = {0: False, 1: False, 2:True, 3:True, 4:False, 5:False, 6:False, 7:False, 8:False}
@@ -38,22 +41,23 @@ class Game(object):
         self.settings_rect = None
         self.mouse_pos = (None, None)
         self.window = Window()
-        self.buttons = [["Settings", None], ["Clear", None], ["Pause", None], ["Random", None]]
+        self.buttons = [["Settings", None], ["Clear", None], ["Pause", None], ["Random", None], ["Speed up", None], ["Slow down", None], ["Next Move", None]]
+        self.mouse_down = False
+        self.next_move = False
 
     # this function changes dead cells to living and vice versa
     def change_on_click(self):
         x, y = (self.mouse_pos[0] // BLOCK_SIZE, self.mouse_pos[1] // BLOCK_SIZE)
-        print(x,y)
         if x >= ROWS or y >= COLUMNS:
             return None
         if self.grid[x][y] == None:
             self.grid[x][y] = 0
-        else:
+        elif not self.mouse_down:
             self.grid[x][y] = None
 
     #creating next generation of GoL
     def next_generation(self):
-        if self.pause:
+        if self.pause and not self.next_move:
             return None
         next_grid = [[None for y in range(ROWS)] for x in range(COLUMNS)] #empty grid to store values
         for x in range(COLUMNS):
@@ -86,10 +90,6 @@ class Game(object):
             self.surface.blit(my_font, (left_coords, HEIGHT+BLOCK_SIZE))
             left_coords = left_coords + button[1].width + BLOCK_SIZE
 
-
-
-
-
     def print_grid(self):
         for x in range(ROWS):
             for y in range(COLUMNS):
@@ -112,6 +112,11 @@ class Game(object):
                     self.grid[x][y] = 0
                 else:
                     self.grid[x][y] = None
+    
+    def get_next_move(self):
+        self.next_move = True
+        self.next_generation()
+        self.next_move = False
                      
 
     
@@ -127,6 +132,13 @@ class Game(object):
             self.pause_game()
         if self.buttons[3][1].collidepoint(self.mouse_pos):
             self.random_game()
+        if self.buttons[4][1].collidepoint(self.mouse_pos):
+            self.time *= 0.75
+        if self.buttons[5][1].collidepoint(self.mouse_pos):
+            self.time /= 0.75
+        if self.buttons[6][1].collidepoint(self.mouse_pos):
+            self.get_next_move()
+
 
 
     def run(self):
@@ -139,12 +151,21 @@ class Game(object):
                 if event.type == KEYDOWN:
                     if event.key == K_p:
                         self.pause_game()
+                if event.type == MOUSEBUTTONUP:
+                    self.mouse_down = False
                 if event.type == MOUSEBUTTONDOWN:
+                    if not self.mouse_down:
+                        self.mouse_pos = pygame.mouse.get_pos()
+                        self.mouse_clicked()
+                        break
+                if pygame.mouse.get_pressed()[0]:
                     self.mouse_pos = pygame.mouse.get_pos()
-                    self.mouse_clicked()
+                    self.change_on_click()
+                    self.mouse_down = True
             self.print_grid()
             self.generate_buttons()
-            time.sleep(self.time)
+            if not self.pause:
+                time.sleep(self.time)
             pygame.display.update()
             self.next_generation()
 

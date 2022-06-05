@@ -38,6 +38,7 @@ class Game(object):
         self.settings_rect = None
         self.mouse_pos = (None, None)
         self.window = Window()
+        self.buttons = [["Settings", None], ["Clear", None], ["Pause", None], ["Random", None]]
 
     # this function changes dead cells to living and vice versa
     def change_on_click(self):
@@ -75,12 +76,18 @@ class Game(object):
         self.grid = next_grid.copy()
 
     # creating settings button
-    def settings_button(self):
+    def generate_buttons(self):
         font = pygame.font.SysFont("arial", BLOCK_SIZE*2)
-        settings_text = font.render("Settings", True, (0, 0, 255))        
-        self.settings_rect = settings_text.get_rect(topleft = (BLOCK_SIZE, HEIGHT+BLOCK_SIZE))
-        pygame.draw.rect(self.surface, (114, 114, 114), self.settings_rect, 0)
-        self.surface.blit(settings_text, (BLOCK_SIZE, HEIGHT+BLOCK_SIZE))
+        left_coords = BLOCK_SIZE
+        for button in self.buttons: 
+            my_font = font.render(button[0], True, (0, 0, 255))
+            button[1] = my_font.get_rect(topleft = (left_coords, HEIGHT+BLOCK_SIZE))
+            pygame.draw.rect(self.surface, (114, 114, 114), button[1], 0)
+            self.surface.blit(my_font, (left_coords, HEIGHT+BLOCK_SIZE))
+            left_coords = left_coords + button[1].width + BLOCK_SIZE
+
+
+
 
 
     def print_grid(self):
@@ -89,7 +96,38 @@ class Game(object):
                 if self.grid[x][y] != None:
                     rect = pygame.Rect(x*BLOCK_SIZE, y*BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE)
                     pygame.draw.rect(self.surface, SHADES[self.grid[x][y]], rect, 0)
-            
+
+    def clear_grid(self):
+        for x in range(COLUMNS):
+            for y in range(ROWS):
+                self.grid[x][y] = None 
+
+    def pause_game(self):
+        self.pause = not self.pause
+
+    def random_game(self):
+        for x in range(COLUMNS):
+            for y in range(ROWS):
+                if bool(random.getrandbits(1)):
+                    self.grid[x][y] = 0
+                else:
+                    self.grid[x][y] = None
+                     
+
+    
+    def mouse_clicked(self):
+        self.change_on_click()
+        if self.buttons[0][1].collidepoint(self.mouse_pos):
+            self.window.show_window()                       #creating window as a new object
+            self.survive = self.window.old_survive.copy()  #updating conditions
+            self.born = self.window.old_born.copy()
+        if self.buttons[1][1].collidepoint(self.mouse_pos):
+            self.clear_grid()
+        if self.buttons[2][1].collidepoint(self.mouse_pos):
+            self.pause_game()
+        if self.buttons[3][1].collidepoint(self.mouse_pos):
+            self.random_game()
+
 
     def run(self):
         running = True
@@ -100,17 +138,12 @@ class Game(object):
                         running = False
                 if event.type == KEYDOWN:
                     if event.key == K_p:
-                        self.pause = not self.pause
-                        print(self.pause)
+                        self.pause_game()
                 if event.type == MOUSEBUTTONDOWN:
-                        self.mouse_pos = pygame.mouse.get_pos()
-                        self.change_on_click()
-                        if self.settings_rect.collidepoint(self.mouse_pos):
-                            self.window.show_window()                       #creating window as a new object
-                            self.survive = self.window.old_survive.copy()  #updating conditions
-                            self.born = self.window.old_born.copy()       # updateing conditoins
+                    self.mouse_pos = pygame.mouse.get_pos()
+                    self.mouse_clicked()
             self.print_grid()
-            self.settings_button()
+            self.generate_buttons()
             time.sleep(self.time)
             pygame.display.update()
             self.next_generation()

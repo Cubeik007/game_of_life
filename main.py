@@ -29,8 +29,8 @@ class Game(object):
         pygame.init()
         self.surface = pygame.display.set_mode((WIDTH, HEIGHT+LOWER_WIDTH))
         pygame.display.set_caption('Game of Life')
-        my_icon = pygame.image.load("GoL\GOL_icon.png")
-        pygame.display.set_icon(my_icon)
+        # my_icon = pygame.image.load("GoL\GOL_icon.png")
+        # pygame.display.set_icon(my_icon)
         self.surface.fill(BLACK)
         self.grid = [[None for y in range(ROWS)] for x in range(COLUMNS)]
         self.survive = {0: False, 1: False, 2:True, 3:True, 4:False, 5:False, 6:False, 7:False, 8:False}
